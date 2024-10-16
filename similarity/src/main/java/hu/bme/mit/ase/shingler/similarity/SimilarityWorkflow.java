@@ -1,6 +1,6 @@
 package hu.bme.mit.ase.shingler.similarity;
 
-import hu.bme.mit.ase.shingler.workflow.impl.*;
+import  hu.bme.mit.ase.shingler.workflow.impl.*;
 import hu.bme.mit.ase.shingler.workflow.lib.*;
 
 public class SimilarityWorkflow extends Workflow<Double> {
@@ -11,6 +11,74 @@ public class SimilarityWorkflow extends Workflow<Double> {
     public final Pin<String> tokenizerBInput = new Pin<>();
 
     // Parameter declarations
+    public class NAMEWorkflow extends Workflow<Double> {
+
+        // Input pin declarations
+        // Input pin declarations
+        {%- for in_pin in inPins %}
+        public final Pin<String> {{ in_pin.name }} = new Pin<>();
+        {%- endfor %}
+
+        // Parameter declarations
+        // Parameter declarations
+        {%- for param in parameters %}
+        private final {{ param.type }} {{ param.name }};
+        {%- endfor %}
+
+        public {{ name }}Workflow({% for param in parameters %}{{ param.type }} {{ param.name }}{% if not loop.last %}, {% endif %}{% endfor %}) {
+            {%- for param in parameters %}
+            this.{{ param.name }} = {{ param.name }};
+            {%- endfor %}
+        }
+
+        @Override
+        protected void initialize() {
+            // Worker declarations
+            {%- for worker in workers %}
+            var {{ worker.name }} = new {{ worker.type }}Worker(
+                    {%- if worker.arguments -%}
+            {%- for argument in worker.arguments -%}
+            {{ argument }}
+            {%- if not loop.last -%}, {% endif -%}
+            {%- endfor -%}
+            {%- endif -%}
+);
+            {%- endfor %}
+            {% for worker in workers %}
+            addWorker({{ worker.name }});
+            {%- endfor %}
+
+            // Adding all workers
+            // ...
+
+            // Set output pin
+            // ...
+
+            // Input pin channel declarations
+            // ...
+
+            // Channel declarations
+            // ...
+
+            // Add input pin channels
+            // ...
+
+            // Add channels
+            {% for in_pin in inPins %}
+            var input{{ in_pin.name | capitalize }} = new Channel<>({{ in_pin.name }}, {{ in_pin.worker }}.{{ in_pin.pin }}Pin);
+            {%- endfor %}
+            {% for in_pin in inPins %}
+            addChannel(input{{ in_pin.name | capitalize }});
+            {%- endfor %}
+            {% for channel in channels %}
+            var {{ channel.name }} = new Channel<>({{ channel.fromWorker }}.outputPin, {{ channel.toWorker }}.{{ channel.toPin }}Pin);
+            {%- endfor %}
+            {% for channel in channels %}
+            addChannel({{ channel.name }});
+            {%- endfor %}
+        }
+
+    }
 
     private final boolean granularity;
     private final int size;
